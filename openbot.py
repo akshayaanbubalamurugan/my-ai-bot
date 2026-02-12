@@ -1,33 +1,34 @@
 import streamlit as st
 from huggingface_hub import InferenceClient
 
+st.set_page_config(page_title="My Smart AI Bot", page_icon="🤖")
+st.title("🤖 My Smart AI Bot")
 
 TOKEN = st.secrets["HF_TOKEN"]
-client = InferenceClient(api_key=TOKEN)
+client = InferenceClient("meta-llama/Meta-Llama-3-8B-Instruct", token=TOKEN)
 
-st.title("🤖 My Smart AI Bot")
-st.write("Ask me anything!")
+if st.button("Clear Chat 🗑️"):
+    st.session_state.messages = []
+    st.rerun()
+    
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-user_input = st.text_input("Unnga kelvi enna?", placeholder="Example: What is titanium?")
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-if st.button("Get Answer"):
-    if user_input:
-        with st.spinner("AI is thinking..."):
-            try:
+if prompt := st.chat_input("Ask me anything..."):
+
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+
+    with st.chat_message("assistant"):
+        response = client.text_generation(prompt, max_new_tokens=500)
+        st.markdown(response)
+    
+    st.session_state.messages.append({"role": "assistant", "content": response})
                 
-                response = client.chat_completion(
-                    model="meta-llama/Llama-3.2-1B-Instruct",
-                    messages=[{"role": "user", "content": user_input}],
-                    max_tokens=500
-                )
-                
-                
-                answer = response.choices[0].message.content
-                st.success("Done!")
-                st.markdown("### Answer:")
-                st.write(answer)
-                
-            except Exception as e:
-                st.error(f"Error: {e}")
-    else:
-        st.warning("Please enter a question!")
+         
