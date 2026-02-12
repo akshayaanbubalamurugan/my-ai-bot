@@ -10,7 +10,7 @@ client = InferenceClient("meta-llama/Meta-Llama-3-8B-Instruct", token=TOKEN)
 if st.button("Clear Chat 🗑️"):
     st.session_state.messages = []
     st.rerun()
-    
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -19,17 +19,28 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Ask me anything..."):
-
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-
     with st.chat_message("assistant"):
-        response = client.text_generation(prompt, max_new_tokens=500)
-        st.markdown(response)
     
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        full_response = ""
+        try:
+            for message in client.chat_completion(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=500,
+                stream=True,
+            ):
+                token = message.choices[0].delta.content
+                full_response += token
+            st.markdown(full_response)
+        except Exception as e:
+            st.error(f"Error: {e}")
+            full_response = "Sorry, Llama is busy. Try again!"
+    
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
                 
          
+
 
