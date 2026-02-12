@@ -23,24 +23,27 @@ if prompt := st.chat_input("Ask me anything..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
     
+    with st.chat_message("assistant"):
         full_response = ""
         try:
+          
             for message in client.chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500,
                 stream=True,
             ):
                 token = message.choices[0].delta.content
-                full_response += token
+                if token:
+                    full_response += token
             st.markdown(full_response)
         except Exception as e:
             st.error(f"Error: {e}")
-            full_response = "Sorry, Llama is busy. Try again!"
+            full_response = "Sorry, Llama is taking a break. Try again in a minute!"
     
     st.session_state.messages.append({"role": "assistant", "content": full_response})
                 
          
+
 
 
